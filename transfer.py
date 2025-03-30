@@ -242,8 +242,8 @@ def main():
 
     # --- Create Submission File (OOD) ---
     submission_df_ood = eval_ood.create_ood_df(all_predictions)
-    submission_df_ood.to_csv("submission_ood.csv", index=False)
-    print("submission_ood.csv created successfully.")
+    submission_df_ood.to_csv("submission_ood3.csv", index=False)
+    print("submission_ood3.csv created successfully.")
 
 if __name__ == '__main__':
     main()
