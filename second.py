@@ -22,20 +22,22 @@ import json
 class MobileNetCNN(nn.Module):
     def __init__(self, num_classes=100):
         super(MobileNetCNN, self).__init__()
-        # TODO - define the layers of the network you will use
-        self.model = models.mobilenet_v2()
+        #load predefined mobilenet
+        self.model = models.mobilenet_v2(pretrained=False)
 
+        #adjusting input/output for the Cifar data
         self.model.classifier[1] = nn.Linear(
             self.model.classifier[1].in_features, 
             num_classes
         )
-
+        
+        #adjusting the first layer
         self.model.features[0][0] = nn.Conv2d(
             3, 32, kernel_size=3, stride=1, padding=1, bias=False
         )
     
     def forward(self, x):
-        # TODO - define the forward pass of the network you will use
+        #  - forward pass of the networks predefined architecture 
         return self.model(x)
 
 ################################################################################
@@ -58,17 +60,16 @@ def train(epoch, model, trainloader, optimizer, criterion, CONFIG):
         # move inputs and labels to the target device
         inputs, labels = inputs.to(device), labels.to(device)
 
-        ### TODO - Your code here
-        optimizer.zero_grad()
-        outputs = model(inputs)
-        loss = criterion(outputs, labels)
-        loss.backward()
+        optimizer.zero_grad() #resets gradients from previous batch
+        outputs = model(inputs) #forward pass
+        loss = criterion(outputs, labels) #compute loss
+        loss.backward() #backprop
 
-        nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-        optimizer.step()
+        nn.utils.clip_grad_norm_(model.parameters(), 1.0) #radient clipping to prevent exploding gradients
+        optimizer.step() #update model weights
 
-        running_loss += loss.item()   ### TODO
-        _, predicted = outputs.max(1)    ### TODO
+        running_loss += loss.item()   # compute running loss
+        _, predicted = outputs.max(1)    # get predicted class
 
         total += labels.size(0)
         correct += predicted.eq(labels).sum().item()
@@ -101,8 +102,8 @@ def validate(model, valloader, criterion, device):
             # move inputs and labels to the target device
             inputs, labels = inputs.to(device), labels.to(device)
 
-            outputs = model(inputs) ### TODO -- inference
-            loss = criterion(outputs, labels)    ### TODO -- loss calculation
+            outputs = model(inputs) ### -- inference
+            loss = criterion(outputs, labels)    ### -- loss calculation
 
             running_loss += loss.item()  ### SOLUTION -- add loss from this sample
             _, predicted = outputs.max(1)   ### SOLUTION -- predict the class
@@ -133,8 +134,8 @@ def main():
         "learning_rate": 0.05,
         "epochs": 50,  # Train for longer in a real scenario
         "num_workers": 4, # Adjust based on your system
-        "weight_decay": 4e-5, 
-        "momentum": 0.9,
+        "weight_decay": 4e-5, #l2 to prevent overfitting 
+        "momentum": 0.9, #speeds up convergence 
         "device": "mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu",
         "data_dir": "./data",  # Make sure this directory exists
         "ood_dir": "./data/ood-test",
@@ -151,15 +152,15 @@ def main():
     ############################################################################
 
     transform_train = transforms.Compose([
-        transforms.RandomHorizontalFlip(),
-        transforms.RandomCrop(32, padding=4),
-        transforms.ColorJitter(brightness=0.2, contrast=0.1, saturation=0.1),
+        transforms.RandomHorizontalFlip(), #random flip 
+        transforms.RandomCrop(32, padding=4), #random crop to 32, 32)
+        transforms.ColorJitter(brightness=0.2, contrast=0.1, saturation=0.1), #random jitter to change colors
         transforms.ToTensor(),
         transforms.Normalize((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)),
     ])
 
     ###############
-    # TODO Add validation and test transforms - NO augmentation for validation/test
+    #  Add validation and test transforms - NO augmentation for validation/test
     ###############
 
     # Validation and test transforms (NO augmentation)
@@ -176,15 +177,15 @@ def main():
                                             download=True, transform=transform_train)
 
     # Split train into train and validation (80/20 split)
-    train_size = int(0.8 * len(trainset))   ### TODO -- Calculate training set size
-    val_size = len(trainset) - train_size     ### TODO -- Calculate validation set size
+    train_size = int(0.8 * len(trainset))   ###-- Calculate training set size
+    val_size = len(trainset) - train_size     ###-- Calculate validation set size
     trainset, valset = torch.utils.data.random_split(
         trainset, 
         [train_size, val_size],
         generator=torch.Generator().manual_seed(CONFIG["seed"])
-    )  ### TODO -- split into training and validation sets
+    )  ### -- split into training and validation sets
 
-    ### TODO -- define loaders and test set
+    ### -- define loaders and test set
     trainloader = torch.utils.data.DataLoader(
         trainset,
         batch_size=CONFIG["batch_size"],
@@ -239,7 +240,7 @@ def main():
     ############################################################################
     # Loss Function, Optimizer and optional learning rate scheduler
     ############################################################################
-    criterion = nn.CrossEntropyLoss(label_smoothing=0.1)   ### TODO -- define loss criterion
+    criterion = nn.CrossEntropyLoss(label_smoothing=0.1)   ### -- define loss criterion
     optimizer = optim.RMSprop(
         model.parameters(),
         lr=CONFIG["learning_rate"],

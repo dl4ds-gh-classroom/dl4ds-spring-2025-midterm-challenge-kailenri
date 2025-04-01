@@ -21,16 +21,17 @@ import json
 class SimpleCNN(nn.Module):
     def __init__(self):
         super(SimpleCNN, self).__init__()
-        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
-        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.fc1 = nn.Linear(128 * 4 * 4, 512)
+        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1) #first conv layer input 3 (rgb) output of 32
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1) #second conv layer 
+        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1) #third 
+        self.pool = nn.MaxPool2d(2, 2) #pooling layer 
+        self.fc1 = nn.Linear(128 * 4 * 4, 512) #first fully connected layer 
         self.fc2 = nn.Linear(512, 100) #100 classes in dataset 
-        self.dropout = nn.Dropout(0.25)
+        self.dropout = nn.Dropout(0.25) #droupout 
     
     def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
+        #setting an activation function of RelU for the conv layers and dropout layer. 
+        x = self.pool(F.relu(self.conv1(x))) 
         x = self.pool(F.relu(self.conv2(x)))
         x = self.pool(F.relu(self.conv3(x)))
         x = x.view(-1, 128 * 4 * 4)
@@ -62,15 +63,18 @@ def train(epoch, model, trainloader, optimizer, criterion, CONFIG):
         ### - Your code here
         optimizer.zero_grad()
 
-        outputs = model(inputs)
-        loss = criterion(outputs, labels)
+        outputs = model(inputs) #forward pass
+        loss = criterion(outputs, labels) #coputes loss
 
-        loss.backward()
-        optimizer.step()
 
-        running_loss += loss.item()  
+        loss.backward() #backprop
+        optimizer.step() #update the weights
+
+        running_loss += loss.item() #adds loss of current to total 
         _, predicted = outputs.max(1)
+        
 
+        #compute accuracy 
         total += labels.size(0)
         correct += predicted.eq(labels).sum().item()
 
@@ -153,7 +157,7 @@ def main():
 
     transform_train = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)), # Example normalization
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)), # normalization
     ])
 
     ###############
@@ -164,7 +168,7 @@ def main():
     transform_test = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-])                                                          ### -- BEGIN SOLUTION
+    ])                                                        
 
     ############################################################################
     #       Data Loading

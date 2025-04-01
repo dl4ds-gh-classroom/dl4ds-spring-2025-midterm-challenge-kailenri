@@ -22,21 +22,22 @@ from torchvision.models import efficientnet_v2_s, EfficientNet_V2_S_Weights
 class EfficientNetV2(nn.Module):
     def __init__(self, num_classes=100):
         super(EfficientNetV2, self).__init__()
-        # TODO - define the layers of the network you will use
+
+        #load pretrained model with imagnet weights
         self.model = efficientnet_v2_s(weights=EfficientNet_V2_S_Weights.IMAGENET1K_V1)
         
-        # Freeze fewer layers - maybe just the first few blocks
+        # Freeze early feature extraction layers (Only freezes first 5 blocks)
         for param in self.model.features[:5].parameters():
-            param.requires_grad = False
+            param.requires_grad = False # Disable gradient computation
             
-        num_features = self.model.classifier[1].in_features
+        num_features = self.model.classifier[1].in_features #adjusts input for the data 
         self.model.classifier = nn.Sequential(
-            nn.Dropout(p=0.2, inplace=True),
-            nn.Linear(in_features=num_features, out_features=num_classes),
+            nn.Dropout(p=0.2, inplace=True), #dropout for regularization 
+            nn.Linear(in_features=num_features, out_features=num_classes), #final layer modification to fit dataset
         )
     
     def forward(self, x):
-        # TODO - define the forward pass of the network you will use
+        # forward pass
         return self.model(x)
 
 ################################################################################
@@ -59,17 +60,16 @@ def train(epoch, model, trainloader, optimizer, criterion, CONFIG):
         # move inputs and labels to the target device
         inputs, labels = inputs.to(device), labels.to(device)
 
-        ### TODO - Your code here
-        optimizer.zero_grad()
+        optimizer.zero_grad() #removes prev batch gradients 
 
-        outputs = model(inputs)
+        outputs = model(inputs) 
         loss = criterion(outputs, labels)
 
-        loss.backward()
-        optimizer.step()
+        loss.backward() #back prop
+        optimizer.step() 
 
-        running_loss += loss.item()   ### TODO
-        _, predicted = torch.max(outputs, 1)    ### TODO
+        running_loss += loss.item()   ### calc running loss
+        _, predicted = torch.max(outputs, 1)    ### get predicted label 
 
         total += labels.size(0)
         correct += predicted.eq(labels).sum().item()
@@ -102,8 +102,8 @@ def validate(model, valloader, criterion, device):
             # move inputs and labels to the target device
             inputs, labels = inputs.to(device), labels.to(device)
 
-            outputs = model(inputs) ### TODO -- inference
-            loss = criterion(outputs, labels)    ### TODO -- loss calculation
+            outputs = model(inputs) ###  -- inference
+            loss = criterion(outputs, labels)    ###  -- loss calculation
 
             running_loss += loss.item()  ### SOLUTION -- add loss from this sample
             _, predicted = torch.max(outputs.data, 1)   ### SOLUTION -- predict the class
@@ -129,9 +129,9 @@ def main():
 
 
     CONFIG = {
-        "model": "EfficientNetV2",   # Change name when using a different model
-        "batch_size": 128, # run batch size finder to find optimal batch size
-        "learning_rate": 3e-4,
+        "model": "EfficientNetV2",   #model name
+        "batch_size": 128, # batch size
+        "learning_rate": 3e-4, #L2
         "epochs": 50,  # Train for longer in a real scenario
         "num_workers": 4, 
         "device": "mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu",
@@ -151,15 +151,15 @@ def main():
 
     transform_train = transforms.Compose([
         transforms.Resize((224, 224)),  # Better match for EfficientNet
-        transforms.RandomHorizontalFlip(),
-        transforms.RandomRotation(15),
+        transforms.RandomHorizontalFlip(), #random flip
+        transforms.RandomRotation(15), #random rotation
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.5071, 0.4867, 0.4408],  # CIFAR-100 stats
                         std=[0.2675, 0.2565, 0.2761])
 ])
 
     ###############
-    # TODO Add validation and test transforms - NO augmentation for validation/test
+    #  Add validation and test transforms - NO augmentation for validation/test
     ###############
 
     # Validation and test transforms (NO augmentation)
@@ -178,11 +178,11 @@ def main():
                                             download=True, transform=transform_train)
 
     # Split train into train and validation (80/20 split)
-    train_size = int(0.8 * len(trainset))   ### TODO -- Calculate training set size
-    val_size = len(trainset) - train_size     ### TODO -- Calculate validation set size
-    trainset, valset = torch.utils.data.random_split(trainset, [train_size, val_size])  ### TODO -- split into training and validation sets
+    train_size = int(0.8 * len(trainset))   ###  -- Calculate training set size
+    val_size = len(trainset) - train_size     ###  -- Calculate validation set size
+    trainset, valset = torch.utils.data.random_split(trainset, [train_size, val_size])  ###  -- split into training and validation sets
 
-    ### TODO -- define loaders and test set
+    ###  -- define loaders and test set
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=CONFIG["batch_size"],
                                              shuffle=True, num_workers=CONFIG["num_workers"])
     valloader = torch.utils.data.DataLoader(valset, batch_size=CONFIG["batch_size"],
@@ -218,11 +218,11 @@ def main():
     ############################################################################
     # Loss Function, Optimizer and optional learning rate scheduler
     ############################################################################
-    criterion = nn.CrossEntropyLoss()   ### TODO -- define loss criterion
+    criterion = nn.CrossEntropyLoss()   ###  -- define loss criterion
     optimizer = optim.AdamW([
     {'params': model.model.features.parameters(), 'lr': CONFIG["learning_rate"]/10},
-    {'params': model.model.classifier.parameters(), 'lr': CONFIG["learning_rate"]}], weight_decay=0.01 )  ### TODO -- define optimizer
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=CONFIG["epochs"], eta_min=1e-5)  # Add a scheduler   ### TODO -- you can optionally add a LR scheduler
+    {'params': model.model.classifier.parameters(), 'lr': CONFIG["learning_rate"]}], weight_decay=0.01 )  ###  -- define optimizer
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=CONFIG["epochs"], eta_min=1e-5)  # Add a scheduler   ###  -- you can optionally add a LR scheduler
 
 
     # Initialize wandb
