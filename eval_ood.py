@@ -25,6 +25,13 @@ def evaluate_ood(model, distortion_name, severity, CONFIG):
     # Convert to PyTorch tensors and create DataLoader
     images = torch.from_numpy(images).float() / 255.  # Normalize to [0, 1]
     images = images.permute(0, 3, 1, 2)  # (N, H, W, C) -> (N, C, H, W)
+
+    transform = transforms.Compose([
+        transforms.Resize((224, 224)),  # Resize for each model (1. (32,32) 2.(32,32) 3. (244, 244))
+        transforms.Normalize(mean=[0.5071, 0.4867, 0.4408], 
+                           std=[0.2675, 0.2565, 0.2761])
+    ])
+    images = torch.stack([transform(img) for img in images])
     dataset = torch.utils.data.TensorDataset(images)
     dataloader = torch.utils.data.DataLoader(
         dataset, 
@@ -32,17 +39,11 @@ def evaluate_ood(model, distortion_name, severity, CONFIG):
         shuffle=False, 
         num_workers=CONFIG["num_workers"], 
         pin_memory=True)
-
-    # Normalize after converting to tensor
-    normalize = transforms.Normalize((0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761))
     
     predictions = []  # Store predictions
     with torch.no_grad():
         for inputs in tqdm(dataloader, desc=f"Evaluating {distortion_name} (Severity {severity})", leave=False):
-           inputs = inputs[0]
-           inputs = normalize(inputs) # Apply normalization
-           inputs = inputs.to(device)
-
+           inputs = inputs[0].to(device)
            outputs = model(inputs)
            _, predicted = outputs.max(1)
            predictions.extend(predicted.cpu().numpy())
