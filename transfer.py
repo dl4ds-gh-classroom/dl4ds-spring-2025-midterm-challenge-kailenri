@@ -132,7 +132,7 @@ def main():
         "model": "EfficientNetV2",   #model name
         "batch_size": 128, # batch size
         "learning_rate": 3e-4, #L2
-        "epochs": 50,  # Train for longer in a real scenario
+        "epochs": 50,  
         "num_workers": 4, 
         "device": "mps" if torch.backends.mps.is_available() else "cuda" if torch.cuda.is_available() else "cpu",
         "data_dir": "./data",  # Make sure this directory exists
@@ -219,11 +219,12 @@ def main():
     # Loss Function, Optimizer and optional learning rate scheduler
     ############################################################################
     criterion = nn.CrossEntropyLoss()   ###  -- define loss criterion
+    ### AdamW optimizer, configures the feature params to have a learning rate 1/10 of the classifier learning rate 
     optimizer = optim.AdamW([
     {'params': model.model.features.parameters(), 'lr': CONFIG["learning_rate"]/10},
-    {'params': model.model.classifier.parameters(), 'lr': CONFIG["learning_rate"]}], weight_decay=0.01 )  ###  -- define optimizer
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=CONFIG["epochs"], eta_min=1e-5)  # Add a scheduler   ###  -- you can optionally add a LR scheduler
-
+    {'params': model.model.classifier.parameters(), 'lr': CONFIG["learning_rate"]}], weight_decay=0.01 ) 
+    ### cosing annealing LR optmizer. with a min lr of 1e-5 at the end of annealing 
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=CONFIG["epochs"], eta_min=1e-5)  
 
     # Initialize wandb
     wandb.init(project="-sp25-ds542-challenge", config=CONFIG)

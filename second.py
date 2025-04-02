@@ -219,7 +219,7 @@ def main():
     ############################################################################
     #   Instantiate model and move to target device
     ############################################################################
-    model = MobileNetCNN(num_classes=100)   # instantiate your model ### TODO
+    model = MobileNetCNN(num_classes=100)   # instantiate model
     model = model.to(CONFIG["device"])   # move it to target device
 
     print("\nModel summary:")
@@ -241,18 +241,20 @@ def main():
     # Loss Function, Optimizer and optional learning rate scheduler
     ############################################################################
     criterion = nn.CrossEntropyLoss(label_smoothing=0.1)   ### -- define loss criterion
-    optimizer = optim.RMSprop(
+
+
+    optimizer = optim.RMSprop( ##defines RSMprop as the optimizer to optimize the learning rate for the model 
         model.parameters(),
         lr=CONFIG["learning_rate"],
         momentum=CONFIG["momentum"],
         weight_decay=CONFIG["weight_decay"],
         eps=1.0
-    )   ###  -- define optimizer
-    scheduler = optim.lr_scheduler.StepLR(
+    )   
+    scheduler = optim.lr_scheduler.StepLR( ### defines the learning rate scheduler
         optimizer,
         step_size=30,
         gamma=0.1
-    )  # Add a scheduler   ###  -- you can optionally add a LR scheduler
+    )  
 
 
     # Initialize wandb

@@ -26,11 +26,13 @@ def evaluate_ood(model, distortion_name, severity, CONFIG):
     images = torch.from_numpy(images).float() / 255.  # Normalize to [0, 1]
     images = images.permute(0, 3, 1, 2)  # (N, H, W, C) -> (N, C, H, W)
 
+    ###I used deepseek to help solve this issue 
     transform = transforms.Compose([
-        transforms.Resize((224, 224)),  # Resize for each model (1. (32,32) 2.(32,32) 3. (244, 244))
+        transforms.Resize((224, 224)),  # Resize for each model (1. (32,32) 2.(32,32) 3. (244, 244)) 
         transforms.Normalize(mean=[0.5071, 0.4867, 0.4408], 
                            std=[0.2675, 0.2565, 0.2761])
     ])
+    ####
     images = torch.stack([transform(img) for img in images])
     dataset = torch.utils.data.TensorDataset(images)
     dataloader = torch.utils.data.DataLoader(

@@ -161,7 +161,7 @@ def main():
     ])
 
     ###############
-    # TODO Add validation and test transforms - NO augmentation for validation/test
+    #  Add validation and test transforms - NO augmentation for validation/test
     ###############
 
     # Validation and test transforms (NO augmentation)
@@ -220,10 +220,9 @@ def main():
     ############################################################################
     # Loss Function, Optimizer and optional learning rate scheduler
     ############################################################################
-    criterion = nn.CrossEntropyLoss()   ### TODO -- define loss criterion
-    optimizer = optim.SGD(model.parameters(), lr=CONFIG['learning_rate'], momentum=0.9)   ###  -- define optimizer
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)  # Add a scheduler   ### TODO -- you can optionally add a LR scheduler
-
+    criterion = nn.CrossEntropyLoss()   ###  -- define loss criterion
+    optimizer = optim.SGD(model.parameters(), lr=CONFIG['learning_rate'], momentum=0.9)   ###  optimizer for stochastic gradient descent 
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)  # Add a scheduler  
 
     # Initialize wandb
     wandb.init(project="-sp25-ds542-challenge", config=CONFIG)
